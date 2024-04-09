@@ -1,14 +1,14 @@
 SharePointIndexToAzureAISearch
 ============
 
-simple console app to demonstrate how to create an Azure AI Search Index using SharePoint files, and its Permission groups.\
+Simple console app to demonstrate how to create an Azure AI Search Index using SharePoint files, and its Permission groups.\
 this console app will grab sharepoint document library pdf files, and shared group permission,\
 and generate an index on Azure AI Search Service with security filter
 
 Preperation
 ------------
 
-there are some preparation
+Steps:
 1. Install dotnet 8.0 runtime\
     https://dotnet.microsoft.com/en-us/download
 
