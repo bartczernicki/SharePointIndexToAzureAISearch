@@ -220,22 +220,26 @@ public class Program
         string searchIndexChoice = Console.ReadLine()?.ToLower() ?? string.Empty;
         if (searchIndexChoice.ToLower() == "y")
         {
+            var semanticKernelBuilder = Kernel.CreateBuilder();
+            semanticKernelBuilder.Services.AddAzureOpenAIChatCompletion(
+                deploymentName: azureOpenAIModelDeploymentNameChatCompletion!,
+                endpoint: azureOpenAIResourceChatCompletion!,
+                apiKey: azureOpenAPIKeyChatCompletion!,
+                serviceId: azureOpenAIModelDeploymentNameChatCompletion
+                );
+            var semanticKernel = semanticKernelBuilder.Build();
+
             // Perform Vector search in Azure AI
+
+            // 1 - Summarize a Document
             var searchString = "Summarize the Perks Plus policies.";
+            Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine($"Searching: {searchString}");
+            Console.ForegroundColor = ConsoleColor.White;
 
             var topMatchingDocument = await azureAISearchClient!.SearchIndex(searchString, azureOpenAIService);
             var documentText = topMatchingDocument.Document.content;
             Console.WriteLine($"Top matching document: {topMatchingDocument.Document.title}");
-
-            var semanticKernelBuilder = Kernel.CreateBuilder();
-            semanticKernelBuilder.Services.AddAzureOpenAIChatCompletion(
-                deploymentName: azureOpenAIModelDeploymentNameChatCompletion,
-                endpoint: azureOpenAIResourceChatCompletion,
-                apiKey: azureOpenAPIKeyChatCompletion,
-                serviceId: azureOpenAIModelDeploymentNameChatCompletion
-                );
-            var semanticKernel = semanticKernelBuilder.Build();
 
             var summarizeFunction = semanticKernel.CreateFunctionFromPrompt(
                 @"Summarize the text from a PDF document.
@@ -250,7 +254,33 @@ public class Program
 
             Console.ForegroundColor = ConsoleColor.Cyan;
             Console.WriteLine($"Summary of {topMatchingDocument.Document.title}: {summary.ToString()}");
+            Console.WriteLine(string.Empty);
             Console.ForegroundColor = ConsoleColor.White;
+
+            // 2 - Answer a question found in a document
+            var questionString = "How often are performance reviews held and who participates?";
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine($"Searching: {questionString}");
+            Console.ForegroundColor = ConsoleColor.White;
+
+            var topMatchingDocumentQuestion = await azureAISearchClient!.SearchIndex(questionString, azureOpenAIService);
+            var documentTextQuestion = topMatchingDocumentQuestion.Document.content;
+            Console.WriteLine($"Top matching document: {topMatchingDocumentQuestion.Document.title}");
+
+            var questionFunction = semanticKernel.CreateFunctionFromPrompt(
+                @"Answer the following question from the text below: " + questionString +
+                " Text: {{$documentText}}"
+            );
+
+            var answer = await semanticKernel.InvokeAsync(questionFunction,
+                new()
+                {
+                    {"documentText", documentTextQuestion}
+                });
+
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.WriteLine($"Answer: {answer.ToString()}");
+            Console.WriteLine(string.Empty);
         }
     }
 }
