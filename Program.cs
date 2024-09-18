@@ -56,6 +56,12 @@ public class Program
         var azureOpenAIResource = configuration["AzureOpenAIResource"];
         var azureOpenAIModelDeploymentName = configuration["AzureOpenAIModelDeploymentName"];
 
+        // Setting up the Azure OpenAI Execution Endpoint
+        var azureOpenAPIKeyChatCompletion = configuration["AzureOpenAIAPIKeyChatCompletion"];
+        var azureOpenAIResourceChatCompletion = configuration["AzureOpenAIResourceChatCompletion"];
+        var azureOpenAIModelDeploymentNameChatCompletion = configuration["AzureOpenAIModelDeploymentNameChatCompletion"];
+
+
         // Catch error if any of the key SharePoint connecion settings are empty
         if (string.IsNullOrEmpty(clientId) || string.IsNullOrEmpty(clientSecret) || string.IsNullOrEmpty(tenantId))
         {
@@ -192,10 +198,12 @@ public class Program
                 }
                 reader.Close();
 
+#pragma warning disable SKEXP0050
 #pragma warning disable SKEXP0055 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
                 var documentText = textBuilder.ToString();
                 var documentLines = Microsoft.SemanticKernel.Text.TextChunker.SplitPlainTextLines(documentText, MAXTOKENSPERLINE);
                 List<string> paragraphs = TextChunker.SplitPlainTextParagraphs(documentLines, MAXTOKENSPERPARAGRAPH, 0);
+#pragma warning disable SKEXP0050
 #pragma warning restore SKEXP0055 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
                 List<DocumentIndex> documentIndexes = await azureAISearchClient!.GenerateDocumentIndexDateAsync(paragraphs, itemValue, listOfPermissionedGroup, azureOpenAIService);
                 // Send the document to the Azure AI Search Index
@@ -222,10 +230,10 @@ public class Program
 
             var semanticKernelBuilder = Kernel.CreateBuilder();
             semanticKernelBuilder.Services.AddAzureOpenAIChatCompletion(
-                "gpt-4-preview-1106",
-                "https://bartopenaiswedencentral.openai.azure.com/",
-                azureOpenAPIKey,
-                "gpt-4-preview-1106"
+                deploymentName: azureOpenAIModelDeploymentNameChatCompletion,
+                endpoint: azureOpenAIResourceChatCompletion,
+                apiKey: azureOpenAPIKeyChatCompletion,
+                serviceId: azureOpenAIModelDeploymentNameChatCompletion
                 );
             var semanticKernel = semanticKernelBuilder.Build();
 
